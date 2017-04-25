@@ -1,0 +1,67 @@
+---
+title: "Network Model<br>Visualization"
+subtitle: "Understanding<br>complicated<br>network models<br>through visualization"
+author: "Sam Tyner<br><img src ='img/twitter.png' style='width:30px;'> @sctyner <br> <img src ='img/github.png' style='width:30px;'> @sctyner"
+output: 
+  slidy_presentation:
+    css: myslidy.css
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Outline
+
+- Motivation
+- Working Example
+- Model
+- Visualizations
+    * Static
+    * Animation
+    * Interactivity with `plotly`
+
+## Motivating Example
+
+Childhood vaccination - major public health concern
+
+- [Vaccination animation](https://www.theguardian.com/society/ng-interactive/2015/feb/05/-sp-watch-how-measles-outbreak-spreads-when-kids-get-vaccinated)
+
+<img src="img/guardian.png" alt="Screenshot of animation from The Guardian" style="width:600px;">
+
+## Questions
+
+Random interactions in animation aren't realistic
+
+- How do communities affect vaccination rate?
+- How do communities affect spread of disease from outside source? 
+- What factors lead to unvaccinated children?
+- Can communities be identified and targeted for immunization programs?
+
+> Can network modeling answer these? 
+
+## Working Example
+
+Another public health concern - underage drinking & smoking
+
+> How do friendships influence drinking and smoking behavior in teenagers?
+
+Steglich, Snijders & Pearson (2010) "Dynamic Networks and Behavior: Searating Selection from Influence"
+
+## Data
+
+From "Teenage Friends and Lifestyle Study" (Pearson & Mitchell (2000); Pearson & West (2003))
+
+- Glasgow, Scotland, UK
+- Panel data - three waves
+- Each student lists up to 6 school friends
+- Smoking & drinking behavior, other lifestyle variables collected
+
+## References
+
+Pearson, M. and Michell, L. 2000. "Smoke Rings: Social Network Analysis of Friendship Groups, Smoking, and Drug-Taking." *Drugs: Education, Prevention and Policy* 7(1):21-37.
+
+Pearson, M. and West, P. 2003. "Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking." *Connections* 25(2):59-76.
+
+Steglich, C., Snijders, T.A.B, and Pearson, M. 2010. "Dynamic Networks and Behavior: Searating Selection from Influence." *Sociological Methodology.* 40(1):329-393.
+
