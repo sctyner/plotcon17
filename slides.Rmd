@@ -52,10 +52,57 @@ Steglich, Snijders & Pearson (2010) "Dynamic Networks and Behavior: Searating Se
 
 From "Teenage Friends and Lifestyle Study" (Pearson & Mitchell (2000); Pearson & West (2003))
 
-- Glasgow, Scotland, UK
-- Panel data - three waves
+- Glasgow, Scotland, UK, Feb 1995 - Jan 1997
+- Panel data - three waves - aged 12-13 to 14-15
 - Each student lists up to 6 school friends
 - Smoking & drinking behavior, other lifestyle variables collected
+- 160 students in total, only 50 in [example data](https://www.stats.ox.ac.uk/~snijders/siena/)
+
+## Model
+
+- Want: to determine how friendships change risky behavior and vice versa over time
+- Solution: stochastic actor-oriented models (SAOMs) for networks (Snijders 1996)
+    * Stochastic because they model network change over time
+    * Actor-oriented because actor-level covariates are incorporated into model parameters
+    
+## Underlying Mechanisms?
+
+Network changes
+
+- Change doesn't happen all at once, but network observations are discrete
+- Changes are dependent, with a highly complex structure
+- How to model process? 
+    * Continuous-time Markov chains (CTMCs)
+    * Condition on wave 1
+    * Choose one actor (call it $i$) to (potentially) make a change
+    * Choose a second actor (call it $j$) to whom actor $i$ changes ties with probability $p_{ij}$
+    
+    
+    
+## Rate Function
+
+
+## Objective Function
+
+## (Some) Possible Model Parameters 
+
+## Static Visualizations
+
+- Collections of models & corresponding parameter estimates
+- "Heatmap" of probabilities
+
+## Animation
+
+- Microstep Process
+
+## Interactivity with `plotly`
+
+- `geomnet` + `ggplotly()`
+
+## Future Work
+
+- Shiny app for more interactivity
+- Simulation studies with more visualization
 
 ## References
 
@@ -64,4 +111,7 @@ Pearson, M. and Michell, L. 2000. "Smoke Rings: Social Network Analysis of Frien
 Pearson, M. and West, P. 2003. "Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking." *Connections* 25(2):59-76.
 
 Steglich, C., Snijders, T.A.B, and Pearson, M. 2010. "Dynamic Networks and Behavior: Searating Selection from Influence." *Sociological Methodology.* 40(1):329-393.
+
+Snijders, T.A.B. 1996. "Stochastic actor-oriented models for network change." *Journal of Mathematical
+Sociology* 21:149-172.  
 
