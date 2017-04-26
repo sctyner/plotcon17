@@ -120,6 +120,18 @@ covariate-alter  | $s_{i4}(x) = \sum_j x_{ij}z_j$ | Effect of my friend's behavi
 covariate-ego    | $s_{i5}(x) = z_i\sum_j x_{ij}$ | Effect of my behavior on friendship
 same covariate   | $s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)$ | Birds of a feather flock together
 
+## Fitted SAOMs Example
+
+Inspired by Steglich et al. 2010:
+
+Network Evolution:
+
+- Rate 1 ($\alpha_1$)
+- Rate 2 ($\alpha_2$)
+- Outdegree ($S_{1} = \sum\limits_{m=1}^2 \sum\limits_{i=1}^n \sum\limits_{j \neq i} x(t_m)_{ij}$)
+
+Behavior Evolution
+
 ## Static Visualizations
 
 - Collections of models & corresponding parameter estimates
@@ -144,7 +156,7 @@ Pearson, M. and Michell, L. 2000. "Smoke Rings: Social Network Analysis of Frien
 
 Pearson, M. and West, P. 2003. "Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking." *Connections* 25(2):59-76.
 
-Steglich, C., Snijders, T.A.B, and Pearson, M. 2010. "Dynamic Networks and Behavior: Searating Selection from Influence." *Sociological Methodology.* 40(1):329-393.
+Steglich, C., Snijders, T.A.B, and Pearson, M. 2010. "Dynamic Networks and Behavior: Separating Selection from Influence." *Sociological Methodology.* 40(1):329-393.
 
 Snijders, T.A.B. 1996. "Stochastic actor-oriented models for network change." *Journal of Mathematical
 Sociology* 21:149-172.  
