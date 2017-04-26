@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = TRUE)
 ```
 
 ## Outline
@@ -120,28 +120,112 @@ covariate-alter  | $s_{i4}(x) = \sum_j x_{ij}z_j$ | Effect of my friend's behavi
 covariate-ego    | $s_{i5}(x) = z_i\sum_j x_{ij}$ | Effect of my behavior on friendship
 same covariate   | $s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)$ | Birds of a feather flock together
 
-## Fitted SAOMs Example {.smaller}
+## Small SAOMs Example
 
-Inspired by Steglich et al. 2010:
+- Small subset of the 50 friends data
+- Fit three models for network evolution
+- M1: "straw man" model that only has 2 parameters in obective function
+- M2: M1 with one significant *covariate* effect added
+- M3: M1 with one significant *structural* effect added
 
-Network Evolution Parameter | Behavior (Drink, Smoke) Evolution Parameter
-----------------------------|-----------------------------
-Rate 1 ($\alpha_1$) | Rate 1 ($\lambda^D_1$, $\lambda^S_1$)
-Rate 2 ($\alpha_2$) | Rate 2 ($\lambda^D_2$, $\lambda^S_2$)
-Outdegree ($\beta_1$) | Shape: linear ($\gamma^D_1$, $\gamma^S_1$)
-Reciprocity ($\beta_2$) | Shape: quadratic ($\gamma^D_2$, $\gamma^S_2$)
-Preferential attachment ($\beta_3$) | Average similarity: ($\gamma^D_3$, $\gamma^S_3$)
-Transitive ties ($\beta_4$) | Other behavior: ($\gamma^D_4$, $\gamma^S_4$)
-\# of actors at distance 2 ($\beta_5$) |
-Balance ($\beta_6$) |
-Alcohol, smoking alter ($\beta_7$, $\beta_{10}$) |
-Alcohol, smoking ego ($\beta_8$, $\beta_{11}$) |
-Alcohol, smoking sim. ($\beta_9$, $\beta_{12}$) |
 
 ## Static Visualizations
 
 - Collections of models & corresponding parameter estimates
 - "Heatmap" of probabilities
+
+## Distributions of Fitted Model Effects 
+
+```{r distests}
+library(tidyverse)
+library(plotly)
+simu2 <- read_csv("data/simulation-1000-M1-M2-M3.csv")
+p <- ggplot(data = simu2) + 
+  geom_density(aes(x = estimate, fill = Model), alpha = .5) + 
+  facet_wrap(~parameter, scales = 'free') + 
+  theme_bw()
+ggplotly(p)
+```
+
+## Correlation of Estimates
+
+```{r corplot}
+library(GGally)
+simu_spread <- simu2 %>% spread(parameter, estimate)
+p <- ggpairs(simu_spread, columns = 3:8, ggplot2::aes(colour=Model, alpha = .5)) + theme_bw()
+p
+#ggplotly(p)
+```
+
+## "Heatmap"
+
+```{r heatmap}
+library(RSiena)
+library(geomnet)
+load("data/ansnullpaper.rda")
+ansnullchains <- netvizinf::get_chain_info(ansnull)
+chainsms <- ansnullchains %>% 
+  group_by(rep, period) %>% 
+  mutate(microstep = row_number(), 
+         prob = exp(logAlterProb),
+         from = paste0("V", as.numeric(as.character(ego))+1),
+      to = paste0("V", as.numeric(as.character(alter))+1)) %>%
+  ungroup()
+
+fd2.w1 <- s501[20:35, 20:35]
+colnames(fd2.w1) <- paste0("V", 1:16)
+rownames(fd2.w1) <- paste0("V", 1:16)
+wave1friends <- fortify(as.adjmat(fd2.w1))
+ms1 <- netvizinf::listMicrosteps(dat = wave1friends,
+                      microsteps = filter(chainsms, rep == 1, period == 1))
+
+ms1df <- plyr::rbind.fill(lapply(X = seq_along(ms1), FUN = function(i, x) {
+        x[[i]]$ms <- i - 1
+        return(x[[i]])
+    }, ms1))
+# first do just the first rep's microsteps for PCA
+# ms1df %>% group_by(from, to) %>% count() %>% 
+#   spread(to, n, fill = 0) %>% data.frame -> dopca
+# rownames(dopca) <- dopca$from
+# dopca <- as.matrix(dopca[,-1])
+# pca.ms1 <- prcomp(dopca)
+# absorder <- names(sort(abs(pca.ms1$rotation[,1]), decreasing = T))
+# raworder <- names(sort(pca.ms1$rotation[,1], decreasing = T))
+# 
+# chainsms %>%
+#   filter(microstep == 1 & period == 1) %>% 
+#   select(-rep) %>% unique %>% 
+#   ggplot() + 
+#   geom_tile(aes(x = factor(from, levels = raworder), 
+#                 y = factor(to, levels = raworder), fill = prob))
+
+# hm i don't like the look of that, now try PCA on matrix of all 1000 first ms's
+
+chainsms %>%
+  filter(microstep == 1 & period == 1) %>% 
+  group_by(from, to) %>% count %>%
+  spread(to, n, fill = 0)  %>% data.frame -> dopca2 
+rownames(dopca2) <- dopca2$from
+dopca2 <- as.matrix(dopca2[,-1])
+pca.ms1.2 <- prcomp(dopca2)
+absorder2 <- names(sort(abs(pca.ms1.2$rotation[,1]), decreasing = T))
+raworder2 <- names(sort(pca.ms1.2$rotation[,1], decreasing = T))
+
+chainsms %>%
+  filter(microstep == 1 & period == 1) %>% 
+  select(-rep) %>% unique -> datplot 
+datplot$from <- factor(datplot$from, levels = raworder2)
+datplot$to <- factor(datplot$to, levels = raworder2)
+p <- ggplot(datplot) + 
+  geom_tile(aes(x = from, 
+             y = to, fill = prob), color = 'black') +
+  scale_fill_gradient(low = "white", high = "blue", name = "Transition\nProbability") +
+  coord_fixed() + 
+  labs(x = "i", y = "j") + 
+  theme_classic()
+ggplotly(p)
+
+```
 
 ## Animation
 
