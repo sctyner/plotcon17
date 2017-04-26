@@ -120,17 +120,23 @@ covariate-alter  | $s_{i4}(x) = \sum_j x_{ij}z_j$ | Effect of my friend's behavi
 covariate-ego    | $s_{i5}(x) = z_i\sum_j x_{ij}$ | Effect of my behavior on friendship
 same covariate   | $s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)$ | Birds of a feather flock together
 
-## Fitted SAOMs Example
+## Fitted SAOMs Example {.smaller}
 
 Inspired by Steglich et al. 2010:
 
-Network Evolution:
-
-- Rate 1 ($\alpha_1$)
-- Rate 2 ($\alpha_2$)
-- Outdegree ($S_{1} = \sum\limits_{m=1}^2 \sum\limits_{i=1}^n \sum\limits_{j \neq i} x(t_m)_{ij}$)
-
-Behavior Evolution
+Network Evolution Parameter | Behavior (Drink, Smoke) Evolution Parameter
+----------------------------|-----------------------------
+Rate 1 ($\alpha_1$) | Rate 1 ($\lambda^D_1$, $\lambda^S_1$)
+Rate 2 ($\alpha_2$) | Rate 2 ($\lambda^D_2$, $\lambda^S_2$)
+Outdegree ($\beta_1$) | Shape: linear ($\gamma^D_1$, $\gamma^S_1$)
+Reciprocity ($\beta_2$) | Shape: quadratic ($\gamma^D_2$, $\gamma^S_2$)
+Preferential attachment ($\beta_3$) | Average similarity: ($\gamma^D_3$, $\gamma^S_3$)
+Transitive ties ($\beta_4$) | Other behavior: ($\gamma^D_4$, $\gamma^S_4$)
+\# of actors at distance 2 ($\beta_5$) |
+Balance ($\beta_6$) |
+Alcohol, smoking alter ($\beta_7$, $\beta_{10}$) |
+Alcohol, smoking ego ($\beta_8$, $\beta_{11}$) |
+Alcohol, smoking sim. ($\beta_9$, $\beta_{12}$) |
 
 ## Static Visualizations
 
