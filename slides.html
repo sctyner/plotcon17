@@ -85,6 +85,139 @@ Sam Tyner<br><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAD0AAAA+CAY
 </ul></li>
 </ul>
 </div>
+<div id="underlying-mechanisms" class="slide section level2">
+<h1>Underlying Mechanisms?</h1>
+<p>Network changes</p>
+<ul>
+<li>Change doesn’t happen all at once, but network observations are discrete</li>
+<li>Changes are dependent, with a highly complex structure</li>
+<li>How to model process?
+<ul>
+<li>Continuous-time Markov chains (CTMCs)</li>
+<li>Condition on wave 1</li>
+<li>Choose one actor (call it <span class="math inline">\(i\)</span>) to (potentially) make a change</li>
+<li>Choose a second actor (call it <span class="math inline">\(j\)</span>) to whom actor <span class="math inline">\(i\)</span> changes ties with probability <span class="math inline">\(p_{ij}\)</span></li>
+</ul></li>
+</ul>
+</div>
+<div id="rate-function" class="slide section level2">
+<h1>Rate Function</h1>
+<p>Rate at which actors are selected to act</p>
+<ul>
+<li>Simple rate parameter, <span class="math inline">\(\alpha\)</span>, for all actors</li>
+<li>Waiting time for <em>one</em> actor to act is distributed <span class="math inline">\(Exp(\alpha^{-1})\)</span></li>
+<li>Waiting time for <em>any</em> actor to act is distributed <span class="math inline">\(Exp((n\alpha)^{-1})\)</span></li>
+<li>Probability that actor <span class="math inline">\(i\)</span> will be the next one to act is <span class="math inline">\(\frac{1}{n}\)</span></li>
+</ul>
+</div>
+<div id="objective-function" class="slide section level2">
+<h1>Objective Function</h1>
+<p>When actor <span class="math inline">\(i\)</span> can change, it tries to maximize its objective function:</p>
+<p><span class="math display">\[f_i(x, \mathbf{z}, \boldsymbol{\beta}) = \sum_k \beta_k s_{ik}(x, \mathbf{z})\]</span></p>
+<ul>
+<li><span class="math inline">\(x\)</span> is the network state</li>
+<li><span class="math inline">\(\mathbf{z}\)</span> is a matrix of actor-level covariates</li>
+<li><span class="math inline">\(s_{ik}(x, \mathbf{z})\)</span> are network &amp; covariate statistics</li>
+<li><span class="math inline">\(\beta_k\)</span> are the parameters to be fit in the model</li>
+<li>There can be any number of <span class="math inline">\(\beta_k\)</span> added to the model (problematic)</li>
+</ul>
+</div>
+<div id="transition-probability" class="slide section level2">
+<h1>Transition Probability</h1>
+<p>The probability that actor <span class="math inline">\(i\)</span> will change the tie to actor <span class="math inline">\(j\)</span> is:</p>
+<p><span class="math display">\[p_{ij} = \frac{\exp\left\{f_i(x(i\leadsto j), \mathbf{z}, \boldsymbol{\beta})\right\}}{\sum_h \exp\left\{f_i(x(i\leadsto h), \mathbf{z}, \boldsymbol{\beta})\right\}}\]</span> - <span class="math inline">\(x(i\leadsto j)\)</span> is the network identical to the current state, <span class="math inline">\(x\)</span>, except for <span class="math inline">\(x_{ij}\)</span>, which becomes <span class="math inline">\(1-x_{ij}\)</span></p>
+</div>
+<div id="some-possible-model-parameters" class="slide section level2">
+<h1>(Some) Possible Model Parameters</h1>
+<table style="width:82%;">
+<colgroup>
+<col width="26%"></col>
+<col width="31%"></col>
+<col width="23%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th>Structural Effect</th>
+<th>Sufficient Statistic</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>outdegree*</td>
+<td><span class="math inline">\(s_{i1}(x) = \sum_j x_{ij}\)</span></td>
+<td>Popularity</td>
+</tr>
+<tr class="even">
+<td>reciprocity*</td>
+<td><span class="math inline">\(s_{i2}(x) = \sum_j x_{ij}x_{ji}\)</span></td>
+<td>Reciprocated relationships</td>
+</tr>
+<tr class="odd">
+<td>transitive triplets</td>
+<td><span class="math inline">\(s_{i3}(x) = \sum_{j,h} x_{ij}x_{jh}x_{ih}\)</span></td>
+<td>Your friend becomes my friend</td>
+</tr>
+</tbody>
+</table>
+<table style="width:82%;">
+<colgroup>
+<col width="25%"></col>
+<col width="31%"></col>
+<col width="25%"></col>
+</colgroup>
+<thead>
+<tr class="header">
+<th>Covariate Effect</th>
+<th>Sufficient Statistic</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>covariate-alter</td>
+<td><span class="math inline">\(s_{i4}(x) = \sum_j x_{ij}z_j\)</span></td>
+<td>Effect of my friend’s behavior on friendship</td>
+</tr>
+<tr class="even">
+<td>covariate-ego</td>
+<td><span class="math inline">\(s_{i5}(x) = z_i\sum_j x_{ij}\)</span></td>
+<td>Effect of my behavior on friendship</td>
+</tr>
+<tr class="odd">
+<td>same covariate</td>
+<td><span class="math inline">\(s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)\)</span></td>
+<td>Birds of a feather flock together</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="static-visualizations" class="slide section level2">
+<h1>Static Visualizations</h1>
+<ul>
+<li>Collections of models &amp; corresponding parameter estimates</li>
+<li>“Heatmap” of probabilities</li>
+</ul>
+</div>
+<div id="animation" class="slide section level2">
+<h1>Animation</h1>
+<ul>
+<li>Microstep Process</li>
+</ul>
+</div>
+<div id="interactivity-with-plotly" class="slide section level2">
+<h1>Interactivity with <code>plotly</code></h1>
+<ul>
+<li><code>geomnet</code> + <code>ggplotly()</code></li>
+</ul>
+</div>
+<div id="future-work" class="slide section level2">
+<h1>Future Work</h1>
+<ul>
+<li>Shiny app for more interactivity</li>
+<li>Simulation studies with more visualization</li>
+</ul>
+</div>
 <div id="references" class="slide section level2">
 <h1>References</h1>
 <p>Pearson, M. and Michell, L. 2000. “Smoke Rings: Social Network Analysis of Friendship Groups, Smoking, and Drug-Taking.” <em>Drugs: Education, Prevention and Policy</em> 7(1):21-37.</p>

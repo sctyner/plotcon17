@@ -77,14 +77,48 @@ Network changes
     * Choose one actor (call it $i$) to (potentially) make a change
     * Choose a second actor (call it $j$) to whom actor $i$ changes ties with probability $p_{ij}$
     
-    
-    
 ## Rate Function
 
+Rate at which actors are selected to act
+
+- Simple rate parameter, $\alpha$, for all actors
+- Waiting time for *one* actor to act is distributed $Exp(\alpha^{-1})$
+- Waiting time for *any* actor to act is distributed $Exp((n\alpha)^{-1})$
+- Probability that actor $i$ will be the next one to act is $\frac{1}{n}$
 
 ## Objective Function
 
+When actor $i$ can change, it tries to maximize its objective function:
+
+$$f_i(x, \mathbf{z}, \boldsymbol{\beta}) = \sum_k \beta_k s_{ik}(x, \mathbf{z})$$
+
+- $x$ is the network state
+- $\mathbf{z}$ is a matrix of actor-level covariates
+- $s_{ik}(x, \mathbf{z})$ are network & covariate statistics
+- $\beta_k$ are the parameters to be fit in the model
+- There can be any number of $\beta_k$ added to the model (problematic)
+
+## Transition Probability
+
+The probability that actor $i$ will change the tie to actor $j$ is: 
+
+$$p_{ij} = \frac{\exp\left\{f_i(x(i\leadsto j), \mathbf{z}, \boldsymbol{\beta})\right\}}{\sum_h \exp\left\{f_i(x(i\leadsto h), \mathbf{z}, \boldsymbol{\beta})\right\}}$$
+- $x(i\leadsto j)$ is the network identical to the current state, $x$, except for $x_{ij}$, which becomes $1-x_{ij}$ 
+
+
 ## (Some) Possible Model Parameters 
+
+Structural Effect | Sufficient Statistic | Interpretation
+------------------|----------------------|----------------
+outdegree*        | $s_{i1}(x) = \sum_j x_{ij}$ | Popularity
+reciprocity*       | $s_{i2}(x) = \sum_j x_{ij}x_{ji}$ | Reciprocated relationships
+transitive triplets | $s_{i3}(x) = \sum_{j,h} x_{ij}x_{jh}x_{ih}$ | Your friend becomes my friend
+
+Covariate Effect | Sufficient Statistic | Interpretation
+-----------------|----------------------|-----------------
+covariate-alter  | $s_{i4}(x) = \sum_j x_{ij}z_j$ | Effect of my friend's behavior on friendship
+covariate-ego    | $s_{i5}(x) = z_i\sum_j x_{ij}$ | Effect of my behavior on friendship
+same covariate   | $s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)$ | Birds of a feather flock together
 
 ## Static Visualizations
 
