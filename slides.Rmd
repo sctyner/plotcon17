@@ -31,7 +31,7 @@ Childhood vaccination - major public health concern
 
 ## Questions
 
-Random interactions in animation aren't realistic
+Interactions in animation aren't realistic - people don't behave like bacteria in petri dishes!
 
 - How do communities affect vaccination rate?
 - How do communities affect spread of disease from outside source? 
@@ -63,7 +63,7 @@ From "Teenage Friends and Lifestyle Study" (Pearson & Mitchell (2000); Pearson &
 - Want: to determine how friendships change risky behavior and vice versa over time
 - Solution: stochastic actor-oriented models (SAOMs) for networks (Snijders 1996)
     * Stochastic because they model network change over time
-    * Actor-oriented because actor-level covariates are incorporated into model parameters
+    * Actor-oriented because actor-level covariates are incorporated into model parameters XX EXAMPLE XX
     
 ## Underlying Mechanisms?
 
@@ -75,7 +75,7 @@ Network changes
     * Continuous-time Markov chains (CTMCs)
     * Condition on wave 1
     * Choose one actor (call it $i$) to (potentially) make a change
-    * Choose a second actor (call it $j$) to whom actor $i$ changes ties with probability $p_{ij}$
+    * Optimize some utility function by changing ties - choose "best" friend to have or "worst" friend to cut loose 
     
 ## Rate Function
 
@@ -125,8 +125,8 @@ same covariate   | $s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)$ | Birds of 
 - Small subset of the 50 friends data
 - Fit three models for network evolution
 - M1: "straw man" model that only has 2 parameters in obective function
-- M2: M1 with one significant *covariate* effect added
-- M3: M1 with one significant *structural* effect added
+- M2: M1 with one significant *covariate* effect added (drinking behavior)
+- M3: M1 with one significant *structural* effect added (XX LOOK UP INTERPRETATION XX )
 
 
 ## Static Visualizations
@@ -177,7 +177,7 @@ colnames(fd2.w1) <- paste0("V", 1:16)
 rownames(fd2.w1) <- paste0("V", 1:16)
 wave1friends <- fortify(as.adjmat(fd2.w1))
 ms1 <- netvizinf::listMicrosteps(dat = wave1friends,
-                      microsteps = filter(chainsms, rep == 1, period == 1))
+                      microsteps = filter(chainsms, rep == 3, period == 1))
 
 ms1df <- plyr::rbind.fill(lapply(X = seq_along(ms1), FUN = function(i, x) {
         x[[i]]$ms <- i - 1
@@ -229,7 +229,23 @@ ggplotly(p)
 
 ## Animation
 
-- Microstep Process
+- What does the underlying CTMC actually look like?
+
+## GIF of Awesomeness
+
+```{r make gif}
+library(netvizinf)
+library(network)
+microsteps <- ms1
+microsteps_df <- getMicrostepsDF(microsteps)
+pte <- pretween_edges(microsteps = microsteps)
+ptv <- pretween_vertices(pte = pte, layoutparams = list(n = 16))
+pall <- tween_microsteps(ptv, pte, microsteps_df)
+pgif <- netvizinf::create_net_animate(pall)
+#animation::ani.options(list(interval = 1/4, ani.width = 10, ani.height = 10))
+#gganimate::gganimate(pgif, "img/smallfriends.gif", title_frame = F)
+```
+
 
 ## Interactivity with `plotly`
 
