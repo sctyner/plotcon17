@@ -229,10 +229,24 @@ same covariate   | Birds of a feather flock together | <img src ='img/covarsim.p
 - M3: M1 with one significant *structural* effect added (discourages transitive ties, encourages social distance)
 
 
-## Static Visualizations
+## GIF of Awesomeness
 
-- Collections of models & corresponding parameter estimates
-- "Heatmap" of probabilities
+```{r make gif}
+library(netvizinf)
+library(network)
+microsteps <- ms1
+microsteps_df <- getMicrostepsDF(microsteps)
+pte <- pretween_edges(microsteps = microsteps)
+ptv <- pretween_vertices(pte = pte, layoutparams = list(n = 16))
+pall <- tween_microsteps(ptv, pte, microsteps_df)
+pgif <- netvizinf::create_net_animate(pall)
+#animation::ani.options(list(interval = 1/4, ani.width = 10, ani.height = 10))
+#gganimate::gganimate(pgif, "img/smallfriends.gif", title_frame = F)
+```
+
+One simulation of the microstep process from wave 1 to wave 2
+
+<img src="img/smallfriends.gif" style='width:900px;'>
 
 ## Distributions of Fitted Model Effects 
 
@@ -249,7 +263,6 @@ simu2 <- read_csv("data/simulation-1000-M1-M2-M3.csv")
 
 <iframe src="img/distributions.html" width="90%" height="90% scrolling="no" seamless="seamless" frameBorder="0"> </iframe>
 
-
 ## Correlation of Estimates
 
 ```{r corplot}
@@ -260,36 +273,48 @@ p
 #ggplotly(p)
 ```
 
-## Animation
+## Examining Model Fit
 
-- What does the underlying CTMC actually look like?
-
-## GIF of Awesomeness
-
-```{r make gif}
-library(netvizinf)
-library(network)
-microsteps <- ms1
-microsteps_df <- getMicrostepsDF(microsteps)
-pte <- pretween_edges(microsteps = microsteps)
-ptv <- pretween_vertices(pte = pte, layoutparams = list(n = 16))
-pall <- tween_microsteps(ptv, pte, microsteps_df)
-pgif <- netvizinf::create_net_animate(pall)
-#animation::ani.options(list(interval = 1/4, ani.width = 10, ani.height = 10))
-#gganimate::gganimate(pgif, "img/smallfriends.gif", title_frame = F)
+```{r lineup}
+drink2 <- s50a[20:35,2]
+fd2.w2 <- s502[20:35, 20:35]
+colnames(fd2.w1) <- paste0("V", 1:16)
+rownames(fd2.w1) <- paste0("V", 1:16)
+actual2 <- merge(data.frame(as.edgelist(as.network(fd2.w2))), 
+                 data.frame(id = 1:16, drink = drink2), 
+                 by.x = "X1", by.y = "id", all = T)
+set.seed(1234567)
+plots <- sample(20, 5)
+m2sims <- read_csv("data/m2sims20.csv")
+lineupdat <- m2sims %>% filter(count %in% plots)
+nulldat <- lineupdat[,-1]
+names(nulldat) <- c("from", "to", "count")
+datdat <- actual2
+datdat <- datdat[,1:2]
+datdat$count <- 1001
+names(datdat) <- c("from", "to", "count")
+exlu <- rbind(nulldat, datdat)
+exlu <- exlu %>% mutate(from = ifelse(is.na(from), NA, paste0("V", from)),
+                        to = ifelse(is.na(to), NA, paste0("V", to)))
+set.seed(34925)
+exlu$plot_order <- rep(sample(6), as.vector(table(exlu$count)))
+ggplot(data = exlu) + 
+  geom_net(aes(from_id = from, to_id = to), fiteach = T, size = 2, linewidth = .5) + 
+  facet_wrap(~plot_order) + 
+  theme_net() + theme(panel.background = element_rect(fill = NA, colour = 'black'))
 ```
 
+## Conclusion
 
-## Interactivity with `plotly`
-
-- `geomnet` + `ggplotly()`
-
-## Future Work
-
-- Shiny app for more interactivity
-- Simulation studies with more visualization
+- Can use visualization to learn about the model
+- "Model Visualization" (Wickham et al 2015)
+    * Model in the data space and data in the model space
+    * Collections are more informative than singletons
+    * Explore the process, not just the end result
 
 ## References
+
+Wickham, H., Cook, D., and Hofmann, H. 2015. "Visualizing Statistical Models: Removing the Blindfold." *Statistical Analysis and Data Mining: The ASA Data Science Journal* 8(4):204-225.
 
 Pearson, M. and Michell, L. 2000. "Smoke Rings: Social Network Analysis of Friendship Groups, Smoking, and Drug-Taking." *Drugs: Education, Prevention and Policy* 7(1):21-37.
 
