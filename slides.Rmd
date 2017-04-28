@@ -77,41 +77,9 @@ Network changes
     * Choose one actor (call it $i$) to (potentially) make a change
     * Optimize some utility function by changing ties - choose "best" friend to have or "worst" friend to cut loose 
     
-## Rate Function
-
-Rate at which actors are selected to act
-
-- Simple rate parameter, $\alpha$, for all actors
-- Waiting time for *one* actor to act is distributed $Exp(\alpha^{-1})$
-- Waiting time for *any* actor to act is distributed $Exp((n\alpha)^{-1})$
-- Probability that actor $i$ will be the next one to act is $\frac{1}{n}$
-
-## Transition Steps
-
-X 2-3 microstep movie X 
-
-## Objective Function
-
-When actor $i$ can change, it tries to maximize its objective function:
-
-$$f_i(x, \mathbf{z}, \boldsymbol{\beta}) = \sum_k \beta_k s_{ik}(x, \mathbf{z})$$
-
-- $x$ is the network state
-- $\mathbf{z}$ is a matrix of actor-level covariates
-- $s_{ik}(x, \mathbf{z})$ are network & covariate statistics
-- $\beta_k$ are the parameters to be fit in the model
-- There can be any number of $\beta_k$ added to the model (problematic)
-
-## Transition Probability 
-
-The probability that actor $i$ will change the tie to actor $j$ is: 
-
-$$p_{ij} = \frac{\exp\left\{f_i(x(i\leadsto j), \mathbf{z}, \boldsymbol{\beta})\right\}}{\sum_h \exp\left\{f_i(x(i\leadsto h), \mathbf{z}, \boldsymbol{\beta})\right\}}$$
-- $x(i\leadsto j)$ is the network identical to the current state, $x$, except for $x_{ij}$, which becomes $1-x_{ij}$ 
-
-## Transition Probability Heatmap
-
-```{r heatmap}
+```{r computations}
+library(netvizinf)
+library(network)
 library(RSiena)
 library(geomnet)
 load("data/ansnullpaper.rda")
@@ -135,6 +103,50 @@ ms1df <- plyr::rbind.fill(lapply(X = seq_along(ms1), FUN = function(i, x) {
         x[[i]]$ms <- i - 1
         return(x[[i]])
     }, ms1))
+microsteps <- ms1[1:4]
+microsteps_df <- getMicrostepsDF(microsteps)
+pte <- pretween_edges(microsteps = microsteps)
+ptv <- pretween_vertices(pte = pte, layoutparams = list(n = 16))
+pall <- tween_microsteps(ptv, pte, microsteps_df)
+pgif <- netvizinf::create_net_animate(pall)
+#animation::ani.options(list(interval = 1/4, ani.width = 10, ani.height = 10))
+#gganimate::gganimate(pgif, "img/smallfriendsms1-3.gif", title_frame = F)
+```
+## Rate Function
+
+Rate at which actors are selected to act
+
+- Simple rate parameter, $\alpha$, for all actors
+- Waiting time for *one* actor to act is distributed $Exp(\alpha^{-1})$
+- Waiting time for *any* actor to act is distributed $Exp((n\alpha)^{-1})$
+- Probability that actor $i$ will be the next one to act is $\frac{1}{n}$
+
+## Transition Steps
+
+<img src="img/smallfriendsms1-3.gif" style='width:900px;'>
+
+## Objective Function
+
+When actor $i$ can change, it tries to maximize its objective function:
+
+$$f_i(x, \mathbf{z}, \boldsymbol{\beta}) = \sum_k \beta_k s_{ik}(x, \mathbf{z})$$
+
+- $x$ is the network state
+- $\mathbf{z}$ is a matrix of actor-level covariates
+- $s_{ik}(x, \mathbf{z})$ are network & covariate statistics
+- $\beta_k$ are the parameters to be fit in the model
+- There can be any number of $\beta_k$ added to the model (problematic)
+
+## Transition Probability 
+
+The probability that actor $i$ will change the tie to actor $j$ is: 
+
+$$p_{ij} = \frac{\exp\left\{f_i(x(i\leadsto j), \mathbf{z}, \boldsymbol{\beta})\right\}}{\sum_h \exp\left\{f_i(x(i\leadsto h), \mathbf{z}, \boldsymbol{\beta})\right\}}$$
+- $x(i\leadsto j)$ is the network identical to the current state, $x$, except for $x_{ij}$, which becomes $1-x_{ij}$ 
+
+## Transition Probability Heatmap
+
+```{r heatmap}
 # first do just the first rep's microsteps for PCA
 # ms1df %>% group_by(from, to) %>% count() %>% 
 #   spread(to, n, fill = 0) %>% data.frame -> dopca
@@ -176,7 +188,6 @@ p <- ggplot(datplot) +
   labs(x = "i", y = "j") + 
   theme_classic()
 ggplotly(p)
-
 ```
 
 
