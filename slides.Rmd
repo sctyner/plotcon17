@@ -180,16 +180,17 @@ chainsms %>%
   select(-rep) %>% unique -> datplot 
 datplot$from <- factor(datplot$from, levels = raworder2)
 datplot$to <- factor(datplot$to, levels = raworder2)
-p <- ggplot(datplot) + 
-  geom_tile(aes(x = from, 
-             y = to, fill = prob), color = 'black') +
-  scale_fill_gradient(low = "#d8edd5", high = "#006d2c", name = "Transition\nProbability") +
-  coord_fixed() + 
-  labs(x = "i", y = "j") + 
-  theme_classic()
-ggplotly(p)
+# p <- ggplot(datplot) + 
+#   geom_tile(aes(x = from, 
+#              y = to, fill = prob), color = 'black') +
+#   scale_fill_gradient(low = "#d8edd5", high = "#006d2c", name = "Transition\nProbability") +
+#   coord_fixed() + 
+#   labs(x = "i", y = "j") + 
+#   theme_classic()
+# ggplotly(p)
 ```
 
+<iframe src="img/heatmap.html" width="90%" height="90% scrolling="no" seamless="seamless" frameBorder="0"> </iframe>
 
 ## (Some) Possible Model Parameters 
 
@@ -239,12 +240,15 @@ same covariate   | Birds of a feather flock together | <img src ='img/covarsim.p
 library(tidyverse)
 library(plotly)
 simu2 <- read_csv("data/simulation-1000-M1-M2-M3.csv")
-p <- ggplot(data = simu2) + 
-  geom_density(aes(x = estimate, fill = Model), alpha = .5) + 
-  facet_wrap(~parameter, scales = 'free') + 
-  theme_bw()
-ggplotly(p)
+# p <- ggplot(data = simu2) + 
+#   geom_density(aes(x = estimate, fill = Model), alpha = .5) + 
+#   facet_wrap(~parameter, scales = 'free') + 
+#   theme_bw()
+# ggplotly(p)
 ```
+
+<iframe src="img/distributions.html" width="90%" height="90% scrolling="no" seamless="seamless" frameBorder="0"> </iframe>
+
 
 ## Correlation of Estimates
 
