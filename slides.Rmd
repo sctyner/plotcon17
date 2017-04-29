@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = TRUE)
 ```
 
-```{r pkgsdat}
+```{r pkgsdat, results='hide'}
 # load all necessary package
 library(tidyverse)
 library(network)
@@ -353,6 +353,9 @@ ggplot(data = exlu) +
 ## "Average" Network
 
 ```{r avgs}
+actual1 <- merge(data.frame(as.edgelist(as.network(fd2.w1))), 
+                 data.frame(id = 1:16, drink = drink1), 
+                 by.x = "X1", by.y = "id", all = T)
 means <- simu2 %>% group_by(Model, parameter) %>% summarize(
   means = mean(estimate)
 )
@@ -406,8 +409,6 @@ avgW2M3 <- M3avgW2 %>% ungroup() %>%
   filter(weight > 50) %>% 
   mutate(from = as.factor(from), to = as.factor(to))
 
-
-
 #  ggplot() + 
 #  geom_net(aes(from_id = from, to_id = to, linewidth = #weight/max(weight)), directed = T, curvature = .1) + theme_net()
 ```  
@@ -420,7 +421,7 @@ avgW2M3 <- M3avgW2 %>% ungroup() %>%
     * Collections are more informative than singletons
     * Explore the process, not just the end result
 
-## References
+## References {.smaller}
 
 Wickham, H., Cook, D., and Hofmann, H. 2015. "Visualizing Statistical Models: Removing the Blindfold." *Statistical Analysis and Data Mining: The ASA Data Science Journal* 8(4):204-225.
 
