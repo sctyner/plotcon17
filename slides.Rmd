@@ -11,15 +11,52 @@ output:
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, cache = TRUE)
 ```
 
+```{r pkgsdat}
+# load all necessary package
+library(tidyverse)
+library(network)
+library(RSiena)
+library(GGally)
+library(plotly)
+library(geomnet)
+library(netvizinf)
+
+# load data
+simu2 <- read_csv("data/simulation-1000-M1-M2-M3.csv")
+m2sims <- read_csv("data/m2sims20.csv")
+load("data/ansnullpaper.rda")
+drink1 <- s50a[20:35,1]
+drink2 <- s50a[20:35,2]
+drink3 <- s50a[20:35,3]
+fd2.w1 <- s501[20:35, 20:35]
+colnames(fd2.w1) <- paste0("V", 1:16)
+rownames(fd2.w1) <- paste0("V", 1:16)
+fd2.w2 <- s502[20:35, 20:35]
+colnames(fd2.w2) <- paste0("V", 1:16)
+rownames(fd2.w2) <- paste0("V", 1:16)
+fd2.w3 <- s503[20:35, 20:35]
+colnames(fd2.w3) <- paste0("V", 1:16)
+rownames(fd2.w3) <- paste0("V", 1:16)
+smallfriends <- read_csv("data/smallfriends4Geomnet.csv")
+smallfriends %>% 
+  #mutate(from = ifelse(is.na(X1), NA, paste0("V", X1)),
+  #       to = ifelse(is.na(X2), NA, paste0("V", X2))) %>% 
+  mutate(from = as.factor(X1), to = as.factor(X2)) %>% 
+  select(from, to, drink, Wave) -> smallfriends
+friendshipData <- array(c(fd2.w1, fd2.w2, fd2.w3), dim = c(16, 16, 3))
+friendship <- sienaDependent(friendshipData)
+alcohol <- varCovar(cbind(drink1,drink2, drink3))
+mydata <- sienaDataCreate(friendship, alcohol)
+M1eff <- getEffects(mydata)
+M2eff <- includeEffects(M1eff, jumpXTransTrip, interaction1 = "alcohol")
+M3eff <- includeEffects(M1eff, nbrDist2twice)
+```
+
 ## Outline
 
-- Motivation
+- Motivating Example
 - Working Example
-- Model
-- Visualizations
-    * Static
-    * Animation
-    * Interactivity with `plotly`
+- Model & Visualizations
 
 ## Motivating Example
 
@@ -33,56 +70,68 @@ Childhood vaccination - major public health concern
 
 Interactions in animation aren't realistic - people don't behave like bacteria in petri dishes!
 
-- How do communities affect vaccination rate?
-- How do communities affect spread of disease from outside source? 
-- What factors lead to unvaccinated children?
-- Can communities be identified and targeted for immunization programs?
+- How do community beliefs affect vaccination rate?
+- How do those beliefs spread in a population? 
+- How does community structure affect spread of disease from outside source? 
+- What other factors lead to unvaccinated children?
+- Can communities be identified and targeted for immunization programs/initiatives?
 
-> Can network modeling answer these? 
+> Can we use network modeling to answer these questions? 
 
 ## Working Example
 
-Another public health concern - underage drinking & smoking
+Another public health concern - underage drinking & smoking (Steglich, Snijders & Pearson 2010)
 
-> How do friendships influence drinking and smoking behavior in teenagers?
-
-Steglich, Snijders & Pearson (2010) "Dynamic Networks and Behavior: Searating Selection from Influence"
-
-## Data
-
-From "Teenage Friends and Lifestyle Study" (Pearson & Mitchell (2000); Pearson & West (2003))
+Data from "Teenage Friends and Lifestyle Study" (Pearson & Mitchell (2000); Pearson & West (2003))
 
 - Glasgow, Scotland, UK, Feb 1995 - Jan 1997
 - Panel data - three waves - aged 12-13 to 14-15
 - Each student lists up to 6 school friends
 - Smoking & drinking behavior, other lifestyle variables collected
 - 160 students in total, only 50 in [example data](https://www.stats.ox.ac.uk/~snijders/siena/)
+- We use an even smaller subset of 16 pupils
+
+## Network Visualization
+
+```{r dataviz}
+set.seed(3345876)
+alldataviz <- ggplot(data = smallfriends, 
+       aes(from_id = from, to_id = to, color = as.ordered(drink), group = as.ordered(drink))) +
+  geom_net(fiteach = FALSE, directed=TRUE, layout.alg = 'fruchtermanreingold', size = 5, arrowsize = .5, arrowgap = .04, linewidth = .5, ecolour = 'grey40', labelon=T, labelcolour = 'black', fontsize = 3, vjust = .5) +
+  scale_color_brewer(palette = "YlOrRd", name = "Drinking\nBehavior") + 
+  theme_net() +
+  facet_wrap(~Wave, labeller = "label_both") + 
+  theme(legend.position = 'bottom', panel.background = element_rect(fill = NA, color = "grey30"))
+alldataviz
+```
 
 ## Model
 
 - Want: to determine how friendships change risky behavior and vice versa over time
 - Solution: stochastic actor-oriented models (SAOMs) for networks (Snijders 1996)
     * Stochastic because they model network change over time
-    * Actor-oriented because actor-level covariates are incorporated into model parameters XX EXAMPLE XX
+    * Actor-oriented because actor-level covariates are incorporated into model parameters i.e. drinking behavior taken into account when modeling network change
+    * Network structure can also be taken into account when modeling behavior change 
     
-## Underlying Mechanisms?
+## How do SAOMs work?
 
-Network changes
+Just consider modeling network change for now
 
-- Change doesn't happen all at once, but network observations are discrete
-- Changes are dependent, with a highly complex structure
-- How to model process? 
-    * Continuous-time Markov chains (CTMCs)
-    * Condition on wave 1
-    * Choose one actor (call it $i$) to (potentially) make a change
-    * Optimize some utility function by changing ties - choose "best" friend to have or "worst" friend to cut loose 
+- Change doesn't happen all at once, but observations are discrete.
+    * Many unobserved changes between discrete time points
+    * Model unobserved data as Continuous-time Markov chains (CTMCs) 
+- Ties are dependent, with a complex dependency structure
+    * Condition on wave 1 (need at least 2 observations in data)
+    * For steps in CTMC, condition on all current ties
+
+## Markov Chain process     
+
+- Choose one actor (call it $i$) to (potentially) make a change.
+    * Probability of actor choice depends on rate function
+- Actor $i$ tries to optimize some utility function by changing ties or not
+    * Choose a "best" friend to have or a "worst" friend to cut loose 
     
 ```{r computations}
-library(netvizinf)
-library(network)
-library(RSiena)
-library(geomnet)
-load("data/ansnullpaper.rda")
 ansnullchains <- netvizinf::get_chain_info(ansnull)
 chainsms <- ansnullchains %>% 
   group_by(rep, period) %>% 
@@ -91,10 +140,6 @@ chainsms <- ansnullchains %>%
          from = paste0("V", as.numeric(as.character(ego))+1),
       to = paste0("V", as.numeric(as.character(alter))+1)) %>%
   ungroup()
-
-fd2.w1 <- s501[20:35, 20:35]
-colnames(fd2.w1) <- paste0("V", 1:16)
-rownames(fd2.w1) <- paste0("V", 1:16)
 wave1friends <- fortify(as.adjmat(fd2.w1))
 ms1 <- netvizinf::listMicrosteps(dat = wave1friends,
                       microsteps = filter(chainsms, rep == 3, period == 1))
@@ -112,14 +157,16 @@ pgif <- netvizinf::create_net_animate(pall)
 #animation::ani.options(list(interval = 1/4, ani.width = 10, ani.height = 10))
 #gganimate::gganimate(pgif, "img/smallfriendsms1-3.gif", title_frame = F)
 ```
+
 ## Rate Function
 
 Rate at which actors are selected to act
 
 - Simple rate parameter, $\alpha$, for all actors
-- Waiting time for *one* actor to act is distributed $Exp(\alpha^{-1})$
-- Waiting time for *any* actor to act is distributed $Exp((n\alpha)^{-1})$
-- Probability that actor $i$ will be the next one to act is $\frac{1}{n}$
+    * Can be a function of network statistics or actor covariates, but keep it simple for our purposes 
+- Waiting time for *one* actor to act $\sim Exp\left(\frac{1}{\alpha}\right)$
+- Waiting time for *any* actor to act $\sim Exp\left(\frac{1}{n\alpha}\right)$
+- Probability that actor $i$ will be the next one to act is $\frac{1}{n}$, where $n$ is the number of actors in the network
 
 ## Transition Steps
 
@@ -194,7 +241,7 @@ datplot$to <- factor(datplot$to, levels = raworder2)
 
 ## (Some) Possible Model Parameters 
 
-Structural Effect | Sufficient Statistic | Interpretation
+Network Effect | Sufficient Statistic | Interpretation
 ------------------|----------------------|----------------
 outdegree*        | $s_{i1}(x) = \sum_j x_{ij}$ | Popularity
 reciprocity*       | $s_{i2}(x) = \sum_j x_{ij}x_{ji}$ | Reciprocated relationships
@@ -208,7 +255,7 @@ same covariate   | $s_{i6}(x) = \sum_j x_{ij} \mathbb{I}(z_i = z_j)$ | Birds of 
 
 ## (Some) Possible Model Parameters 
 
-Structural Effect | Interpretation | Visualization
+Network Effect | Interpretation | Visualization
 ------------------|----------------|----------------
 outdegree*        | Popularity | <img src ='img/outdegree.png' style='height:60px;'>
 reciprocity*      | Reciprocated relationships | <img src ='img/reciprocity.png' style='height:60px;'>
@@ -222,18 +269,13 @@ same covariate   | Birds of a feather flock together | <img src ='img/covarsim.p
 
 ## Small SAOMs Example
 
-- Small subset of the 50 friends data
+- Our small subset of the 50 friends data
 - Fit three models for network evolution
 - M1: "straw man" model that only has 2 parameters in obective function
-- M2: M1 with one significant *covariate* effect added (drinking behavior encourages transitive ties)
-- M3: M1 with one significant *structural* effect added (discourages transitive ties, encourages social distance)
 
-
-## GIF of Awesomeness
+## Complete Animation
 
 ```{r make gif}
-library(netvizinf)
-library(network)
 microsteps <- ms1
 microsteps_df <- getMicrostepsDF(microsteps)
 pte <- pretween_edges(microsteps = microsteps)
@@ -241,19 +283,29 @@ ptv <- pretween_vertices(pte = pte, layoutparams = list(n = 16))
 pall <- tween_microsteps(ptv, pte, microsteps_df)
 pgif <- netvizinf::create_net_animate(pall)
 #animation::ani.options(list(interval = 1/4, ani.width = 10, ani.height = 10))
-#gganimate::gganimate(pgif, "img/smallfriends.gif", title_frame = F)
+#gganimate::gganimate(pgif, "img/smallfriends.mp4", title_frame = F)
 ```
 
 One simulation of the microstep process from wave 1 to wave 2
 
 <img src="img/smallfriends.gif" style='width:900px;'>
 
+## Other models
+
+Chose additional parameters because of very low $p$-values ($p$ < 0.001) according to `RSiena` (Ripley et al 2016)
+
+- M2: M1 with one significant *covariate* effect added (drinking behavior encourages transitive ties)
+- M3: M1 with one significant *structural* effect added (discourages transitive ties, encourages social distance)
+
+Some Questions:
+
+1. How do additional parameters affect the model fit?
+2. Can we *see* the significance of these parameters? 
+
+
 ## Distributions of Fitted Model Effects 
 
 ```{r distests}
-library(tidyverse)
-library(plotly)
-simu2 <- read_csv("data/simulation-1000-M1-M2-M3.csv")
 # p <- ggplot(data = simu2) + 
 #   geom_density(aes(x = estimate, fill = Model), alpha = .5) + 
 #   facet_wrap(~parameter, scales = 'free') + 
@@ -261,12 +313,11 @@ simu2 <- read_csv("data/simulation-1000-M1-M2-M3.csv")
 # ggplotly(p)
 ```
 
-<iframe src="img/distributions.html" width="90%" height="90% scrolling="no" seamless="seamless" frameBorder="0"> </iframe>
+<iframe src="img/distributions.html" width="100%" height="100% scrolling="no" seamless="seamless" frameBorder="0"> </iframe>
 
 ## Correlation of Estimates
 
 ```{r corplot}
-library(GGally)
 simu_spread <- simu2 %>% spread(parameter, estimate)
 p <- ggpairs(simu_spread, columns = 3:8, ggplot2::aes(colour=Model, alpha = .5)) + theme_bw()
 p
@@ -276,16 +327,11 @@ p
 ## Examining Model Fit
 
 ```{r lineup}
-drink2 <- s50a[20:35,2]
-fd2.w2 <- s502[20:35, 20:35]
-colnames(fd2.w1) <- paste0("V", 1:16)
-rownames(fd2.w1) <- paste0("V", 1:16)
 actual2 <- merge(data.frame(as.edgelist(as.network(fd2.w2))), 
                  data.frame(id = 1:16, drink = drink2), 
                  by.x = "X1", by.y = "id", all = T)
 set.seed(1234567)
 plots <- sample(20, 5)
-m2sims <- read_csv("data/m2sims20.csv")
 lineupdat <- m2sims %>% filter(count %in% plots)
 nulldat <- lineupdat[,-1]
 names(nulldat) <- c("from", "to", "count")
@@ -304,6 +350,68 @@ ggplot(data = exlu) +
   theme_net() + theme(panel.background = element_rect(fill = NA, colour = 'black'))
 ```
 
+## "Average" Network
+
+```{r avgs}
+means <- simu2 %>% group_by(Model, parameter) %>% summarize(
+  means = mean(estimate)
+)
+M1parms <- (means %>% filter(Model == "M1"))$means
+M2parms <- (means %>% filter(Model == "M2"))$means
+M3parms <- (means %>% filter(Model == "M3"))$means
+set.seed(4231352)
+M1sims1000 <- saom_simulate(dat = mydata, 
+                            struct = M1eff,
+                       parms = as.numeric(M1parms), 
+                       N = 1000)
+M2sims1000 <- saom_simulate(dat = mydata, 
+                            struct = M2eff,
+                       parms = as.numeric(M2parms), 
+                       N = 1000)
+M3sims1000 <- saom_simulate(dat = mydata, 
+                            struct = M3eff,
+                       parms = as.numeric(M3parms), 
+                       N = 1000)
+M1simsdf <- sims_to_df(M1sims1000)
+M2simsdf <- sims_to_df(M2sims1000)
+M3simsdf <- sims_to_df(M3sims1000)
+M1avgW2 <- M1simsdf %>% filter(!is.na(to) & wave == 2) %>%
+  group_by(from, to) %>% 
+  summarise(count = n()) %>% 
+  mutate(weight = ifelse(from == to, 0, count))
+M2avgW2 <- M2simsdf %>% filter(!is.na(to) & wave == 2) %>%
+  group_by(from, to) %>% 
+  summarise(count = n()) %>% 
+  mutate(weight = ifelse(from == to, 0, count))
+M3avgW2 <- M3simsdf %>% filter(!is.na(to) & wave == 2) %>%
+  group_by(from, to) %>% 
+  summarise(count = n()) %>% 
+  mutate(weight = ifelse(from == to, 0, count))
+
+# make a df of wave 2, wave 1, and the three averages and facet. 
+names(actual1)[1:2] <- c("from", "to")
+names(actual2)[1:2] <- c("from", "to")
+actual1$count <- 1
+actual1$weight <- 1
+actual2$count <- 1
+actual2$weight <- 1
+
+avgW2M1 <- M1avgW2 %>% ungroup() %>% 
+  filter(weight > 50) %>% 
+  mutate(from = as.factor(from), to = as.factor(to))
+avgW2M2 <- M2avgW2 %>% ungroup() %>% 
+  filter(weight > 50) %>% 
+  mutate(from = as.factor(from), to = as.factor(to))
+avgW2M3 <- M3avgW2 %>% ungroup() %>% 
+  filter(weight > 50) %>% 
+  mutate(from = as.factor(from), to = as.factor(to))
+
+
+
+#  ggplot() + 
+#  geom_net(aes(from_id = from, to_id = to, linewidth = #weight/max(weight)), directed = T, curvature = .1) + theme_net()
+```  
+
 ## Conclusion
 
 - Can use visualization to learn about the model
@@ -319,6 +427,8 @@ Wickham, H., Cook, D., and Hofmann, H. 2015. "Visualizing Statistical Models: Re
 Pearson, M. and Michell, L. 2000. "Smoke Rings: Social Network Analysis of Friendship Groups, Smoking, and Drug-Taking." *Drugs: Education, Prevention and Policy* 7(1):21-37.
 
 Pearson, M. and West, P. 2003. "Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking." *Connections* 25(2):59-76.
+
+Ripley, R., Boitmanis, K., Snijders, T.A.B., & Schoenenberger, F. 2016. *RSiena: Siena - Simulation Investigation for Empirical Network Analysis.*  R package version 1.1-304/r304. [URL](https://R-Forge.R-project.org/projects/rsiena/)
 
 Steglich, C., Snijders, T.A.B, and Pearson, M. 2010. "Dynamic Networks and Behavior: Separating Selection from Influence." *Sociological Methodology.* 40(1):329-393.
 
