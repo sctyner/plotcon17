@@ -398,19 +398,40 @@ actual1$count <- 1
 actual1$weight <- 1
 actual2$count <- 1
 actual2$weight <- 1
+actual1 <- actual1 %>% select(from,to, count, weight)
+actual2 <- actual2 %>% select(from,to, count, weight)
+actual1$cat <- "First Observation"
+actual2$cat <- "Second Observation"
 
 avgW2M1 <- M1avgW2 %>% ungroup() %>% 
   filter(weight > 50) %>% 
-  mutate(from = as.factor(from), to = as.factor(to))
+  mutate(from = as.factor(from), to = as.factor(to),
+         cat = "Model1")
+add1 <- setdiff(as.character(1:16), unique(c(as.character(avgW2M1$from), as.character(avgW2M1$to)))) 
+avgW2M1 %>% add_row(from = add1, to = NA, count = NA, weight = NA, cat = "Model1") -> avgW2M1
 avgW2M2 <- M2avgW2 %>% ungroup() %>% 
   filter(weight > 50) %>% 
-  mutate(from = as.factor(from), to = as.factor(to))
+  mutate(from = as.factor(from), to = as.factor(to),
+         cat = "Model2")
+add2 <- setdiff(as.character(1:16), unique(c(as.character(avgW2M2$from), as.character(avgW2M2$to)))) 
+avgW2M2 %>% add_row(from = add2, to = NA, count = NA, weight = NA, cat = "Model2") -> avgW2M2
 avgW2M3 <- M3avgW2 %>% ungroup() %>% 
   filter(weight > 50) %>% 
-  mutate(from = as.factor(from), to = as.factor(to))
+  mutate(from = as.factor(from), to = as.factor(to),
+         cat = "Model3")
+add3 <- setdiff(as.character(1:16), unique(c(as.character(avgW2M3$from), as.character(avgW2M3$to)))) 
+avgW2M3 %>% add_row(from = add3, to = NA, count = NA, weight = NA, cat = "Model3") -> avgW2M3
 
-#  ggplot() + 
-#  geom_net(aes(from_id = from, to_id = to, linewidth = #weight/max(weight)), directed = T, curvature = .1) + theme_net()
+combinedavgs <- rbind(actual1, actual2, avgW2M1, avgW2M2, avgW2M3)
+combinedavgs %>% group_by(cat) %>% 
+  mutate(linewidth = weight / max(weight,na.rm = T)) -> combinedavgs
+
+ggplot(data = combinedavgs) + 
+  geom_net(aes(from_id = from, to_id = to, linewidth= linewidth),
+           directed = T, curvature = .1, fiteach = T,
+           singletons = T) +
+  theme_net() + 
+  facet_wrap(~cat)
 ```  
 
 ## Conclusion
@@ -423,8 +444,6 @@ avgW2M3 <- M3avgW2 %>% ungroup() %>%
 
 ## References {.smaller}
 
-Wickham, H., Cook, D., and Hofmann, H. 2015. "Visualizing Statistical Models: Removing the Blindfold." *Statistical Analysis and Data Mining: The ASA Data Science Journal* 8(4):204-225.
-
 Pearson, M. and Michell, L. 2000. "Smoke Rings: Social Network Analysis of Friendship Groups, Smoking, and Drug-Taking." *Drugs: Education, Prevention and Policy* 7(1):21-37.
 
 Pearson, M. and West, P. 2003. "Drifting Smoke Rings: Social Network Analysis and Markov Processes in a Longitudinal Study of Friendship Groups and Risk-Taking." *Connections* 25(2):59-76.
@@ -436,3 +455,4 @@ Steglich, C., Snijders, T.A.B, and Pearson, M. 2010. "Dynamic Networks and Behav
 Snijders, T.A.B. 1996. "Stochastic actor-oriented models for network change." *Journal of Mathematical
 Sociology* 21:149-172.  
 
+Wickham, H., Cook, D., and Hofmann, H. 2015. "Visualizing Statistical Models: Removing the Blindfold." *Statistical Analysis and Data Mining: The ASA Data Science Journal* 8(4):204-225.
